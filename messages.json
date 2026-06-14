@@ -1,39 +1,39 @@
 {
   "_README": [
     "EDIT THIS FILE to customize every Discord message, then `git add . && git commit && git push` to apply.",
-    "Colors are hex like '#ff0000' (red). Text in {curly braces} is a placeholder that gets filled in.",
+    "Colors are hex like '#6b7a3a'. Text in {curly braces} is a placeholder that gets filled in.",
     "Placeholders by message:",
-    "  events.kill/teamkill: (none needed) | events.server: {title}",
-    "  leaderboard.title: {periodLabel} {sort}      leaderboard.line: {medal} {rank} {name} {value} {sort} {kills} {deaths} {kd} {captures} {headshots} {longest_kill_m} {kill_streak_best}",
-    "  weaponLeaderboard.title: {periodLabel}        weaponLeaderboard.line: {medal} {rank} {weapon} {kills}",
-    "Anything you leave out falls back to the built-in default. Emojis are allowed."
+    "  events.kill/teamkill/join/leave/objective/admin: (none needed) | events.server: {title}",
+    "  leaderboard.title: {periodLabel} {sort}   leaderboard.line: {rank} {medal} {name} {value} {sort} {kills} {deaths} {kd} {captures} {headshots} {longest_kill_m} {kill_streak_best}",
+    "  weaponLeaderboard.title: {periodLabel}     weaponLeaderboard.line: {rank} {medal} {weapon} {kills}",
+    "Anything you leave out falls back to the built-in default."
   ],
 
   "events": {
-    "kill":      { "title": "💀 Kill",              "color": "#e74c3c" },
-    "teamkill":  { "title": "⚠️ TEAM KILL",          "color": "#ff8c00" },
-    "join":      { "title": "🟢 Player Joined",      "color": "#2ecc71" },
-    "leave":     { "title": "⚪ Player Left",         "color": "#95a5a6" },
-    "objective": { "title": "🚩 Objective Captured", "color": "#3498db" },
-    "admin":     { "title": "🛡️ Admin Action",       "color": "#9b59b6" },
-    "server":    { "title": "📡 {title}",            "color": "#f1c40f" }
+    "kill":      { "title": "Kill Confirmed",            "color": "#7a8b3c" },
+    "teamkill":  { "title": "Fratricide — Friendly Fire", "color": "#b5503f" },
+    "join":      { "title": "Operator Connected",         "color": "#4b5320" },
+    "leave":     { "title": "Operator Disconnected",      "color": "#5a5a4a" },
+    "objective": { "title": "Objective Secured",          "color": "#c2b280" },
+    "admin":     { "title": "Command Action",             "color": "#8b7d5a" },
+    "server":    { "title": "Server Notice — {title}",    "color": "#b8a878" }
   },
 
   "leaderboard": {
-    "title": "🏆 {periodLabel} Leaderboard — by {sort}",
-    "color": "#f1c40f",
-    "medals": ["🥇", "🥈", "🥉"],
-    "line": "{medal} **{name}** — {value} {sort} · K/D {kd}",
-    "empty": "_No data yet for this period._",
-    "footer": "TGZ • powered by TGZ Event API"
+    "title": "Top Operators — {periodLabel} · {sort}",
+    "color": "#c2b280",
+    "medals": [],
+    "line": "`#{rank}`  **{name}**  —  {value} {sort}  ·  K/D {kd}",
+    "empty": "_No combat data recorded for this period._",
+    "footer": "TGZ Tactical Command"
   },
 
   "weaponLeaderboard": {
-    "title": "🔫 Deadliest Weapons — {periodLabel}",
-    "color": "#e67e22",
-    "line": "{medal} **{weapon}** — {kills} kills",
-    "empty": "_No weapon data yet._"
+    "title": "Weapon Effectiveness — {periodLabel}",
+    "color": "#8b7d5a",
+    "line": "`#{rank}`  **{weapon}**  —  {kills} confirmed",
+    "empty": "_No weapon data recorded._"
   },
 
-  "periodLabels": { "all": "All-Time", "day": "Today", "week": "This Week", "month": "This Month" }
+  "periodLabels": { "all": "All-Time", "day": "Daily Report", "week": "Weekly Report", "month": "Monthly Report" }
 }

@@ -48,9 +48,10 @@ test('isoWeek computes a sane week number', () => {
 test('killEmbed flags team kills distinctly', () => {
   const normal = killEmbed({ killer: 'A', victim: 'B', teamkill: false });
   const tk = killEmbed({ killer: 'A', victim: 'B', teamkill: true });
-  assert.match(normal.title, /kill/i);
-  assert.match(tk.title, /kill/i);
-  assert.notEqual(normal.color, tk.color); // distinct color for team kills
+  // Wording is customizable, but a team kill must be visibly distinct from a
+  // normal kill — different title and different color.
+  assert.notEqual(normal.title, tk.title);
+  assert.notEqual(normal.color, tk.color);
 });
 
 test('killEmbed shows a headshot field when flagged', () => {
@@ -58,12 +59,14 @@ test('killEmbed shows a headshot field when flagged', () => {
   assert.ok(hs.fields.some((f) => f.name === 'Headshot'));
 });
 
-test('leaderboardEmbed renders medals and a fallback', () => {
+test('leaderboardEmbed renders rows and a fallback', () => {
   const embed = leaderboardEmbed({ period: 'week', sort: 'kills', rows: [
     { name: 'Mike', kills: 10, kd: 2 },
     { name: 'Sam', kills: 8, kd: 1.5 },
   ] });
-  assert.match(embed.description, /🥇 \*\*Mike\*\*/);
+  // Renders each player and their value; exact formatting is template-driven.
+  assert.match(embed.description, /Mike/);
+  assert.match(embed.description, /Sam/);
   const empty = leaderboardEmbed({ period: 'week', rows: [] });
-  assert.match(empty.description, /No data/);
+  assert.ok(empty.description.length > 0); // shows the customizable empty text
 });

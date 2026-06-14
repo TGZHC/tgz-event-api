@@ -47,7 +47,7 @@ async function renderLeaderboards() {
   setActiveTab('leaderboards');
   view.innerHTML = `
     <h1 class="page-title">Leaderboards</h1>
-    <p class="subtitle">Top operators across the server.</p>
+    <p class="subtitle">Combat performance rankings across all operators.</p>
     <div class="controls">
       <div class="segment" id="lb-periods">${PERIODS.map((p) => `<button data-k="${p.key}" class="${p.key === lbState.period ? 'active' : ''}">${p.label}</button>`).join('')}</div>
       <select id="lb-sort">${SORTS.map((s) => `<option value="${s.key}" ${s.key === lbState.sort ? 'selected' : ''}>Sort: ${s.label}</option>`).join('')}</select>
@@ -73,7 +73,7 @@ async function renderLeaderboards() {
   }
 }
 function lbTable(rows) {
-  if (!rows.length) return '<div class="empty">No data for this period yet. Go frag someone. 🎯</div>';
+  if (!rows.length) return '<div class="empty">No combat data recorded for this period.</div>';
   return `<table>
     <thead><tr>
       <th class="rank">#</th><th>Player</th>
@@ -125,9 +125,9 @@ let playersCache = null;
 async function renderPlayers() {
   setActiveTab('players');
   view.innerHTML = `
-    <h1 class="page-title">Players</h1>
-    <p class="subtitle">Search for a player to see their full history.</p>
-    <div class="controls"><input type="search" id="psearch" placeholder="Search players…" autocomplete="off" /></div>
+    <h1 class="page-title">Operators</h1>
+    <p class="subtitle">Search for an operator to view their full service record.</p>
+    <div class="controls"><input type="search" id="psearch" placeholder="Search operators…" autocomplete="off" /></div>
     <div id="plist" class="card"><div class="loading">Loading…</div></div>`;
   const input = document.getElementById('psearch');
   input.addEventListener('input', () => drawPlayers(input.value.trim().toLowerCase()));
@@ -149,7 +149,7 @@ function drawPlayers(filter) {
          <td class="num">${p.kills}</td><td class="num">${p.deaths}</td>
          <td class="num hide-sm">${fmtDate(p.first_seen)}</td></tr>`).join('')}
        </tbody></table>`
-    : '<div class="empty">No players found.</div>';
+    : '<div class="empty">No operators found.</div>';
 }
 
 // --- Player profile ---
@@ -160,15 +160,15 @@ async function renderProfile(id) {
   try {
     p = await api(`/stats/player/${encodeURIComponent(id)}`);
   } catch (err) {
-    view.innerHTML = `<div class="error">${err.message.includes('404') ? 'Player not found.' : esc(err.message)}</div><p><a class="back" href="#/players">← Back to players</a></p>`;
+    view.innerHTML = `<div class="error">${err.message.includes('404') ? 'Player not found.' : esc(err.message)}</div><p><a class="back" href="#/players">← Back to operators</a></p>`;
     return;
   }
   const t = p.totals;
   const stat = (v, l, accent) => `<div class="stat"><div class="v ${accent ? 'accent' : ''}">${v}</div><div class="l">${l}</div></div>`;
   view.innerHTML = `
-    <p><a class="back" href="#/players">← Back to players</a></p>
+    <p><a class="back" href="#/players">← Back to operators</a></p>
     <div class="profile-head"><h1>${esc(p.name)}</h1>
-      <span class="subtitle">Tracked ${fmtDate(p.first_seen)} → ${fmtDate(p.last_seen)}</span></div>
+      <span class="subtitle">Service record: ${fmtDate(p.first_seen)} → ${fmtDate(p.last_seen)}</span></div>
     <div class="stat-grid">
       ${stat(t.kills, 'Kills', true)}
       ${stat(t.deaths, 'Deaths')}
@@ -180,12 +180,12 @@ async function renderProfile(id) {
       ${stat(fmtPlaytime(t.playtime_seconds), 'Playtime')}
     </div>
     <div class="card chart-card">
-      <h3>Career history</h3>
-      <div class="legend"><span><i style="background:var(--accent)"></i>Cumulative kills</span><span><i style="background:var(--danger)"></i>Cumulative deaths</span></div>
+      <h3>Combat Record</h3>
+      <div class="legend"><span><i style="background:var(--tan)"></i>Cumulative kills</span><span><i style="background:var(--danger)"></i>Cumulative deaths</span></div>
       ${historyChart(p.history)}
     </div>
     <div class="card chart-card">
-      <h3>Day-by-day</h3>
+      <h3>Daily Log</h3>
       ${dayTable(p.history)}
     </div>`;
 }
@@ -211,8 +211,8 @@ function historyChart(history) {
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
     ${gy}${ticks}
     <path d="${line('deaths')}" fill="none" stroke="var(--danger)" stroke-width="2"/>
-    <path d="${line('kills')}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-    ${pts.map((p, i) => dot(p, i, 'kills', 'var(--accent)')).join('')}
+    <path d="${line('kills')}" fill="none" stroke="var(--tan)" stroke-width="2.5"/>
+    ${pts.map((p, i) => dot(p, i, 'kills', 'var(--tan)')).join('')}
   </svg>`;
 }
 function dayTable(history) {
