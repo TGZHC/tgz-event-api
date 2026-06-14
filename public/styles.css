@@ -1,20 +1,31 @@
 /* TGZ Stats — black / olive / tan tactical theme. No framework, no build step. */
+
+/* ════════════════════════════════════════════════════════════════════
+   CUSTOMIZE HERE — change these values to restyle the whole site.
+   Colors are hex codes (#rrggbb). Pick new ones at https://htmlcolorcodes.com
+   After editing, save + push (or edit on GitHub) and the site updates itself.
+   ════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg: #0c0d0a;          /* near-black, warm */
-  --bg-2: #15170f;        /* olive-black panel */
-  --bg-3: #1e2116;        /* raised panel */
-  --line: #2f3420;        /* olive border */
-  --text: #e7e3d4;        /* tan-white */
-  --muted: #968f76;       /* khaki grey */
-  --tan: #c2b280;         /* sand / tan — primary accent */
-  --tan-bright: #dccfa6;
-  --olive: #7a8b3c;       /* olive accent */
-  --olive-dark: #4b5320;
-  --danger: #b5503f;      /* muted brick red (deaths) */
-  --good: #8aa04a;        /* olive-green (positive K/D) */
-  --radius: 4px;
+  --bg: #0c0d0a;          /* page background (near-black)         */
+  --bg-2: #15170f;        /* panels / cards / tables              */
+  --bg-3: #1e2116;        /* raised panels, row hover             */
+  --line: #2f3420;        /* borders / dividers                   */
+  --text: #e7e3d4;        /* main text color                      */
+  --muted: #968f76;       /* dim text (labels, hints)             */
+  --tan: #c2b280;         /* MAIN ACCENT — headings, links, #1s   */
+  --tan-bright: #dccfa6;  /* brighter tan for active items        */
+  --olive: #7a8b3c;       /* secondary accent (active tab, bars)  */
+  --olive-dark: #4b5320;  /* darker olive (borders, tab bg)       */
+  --danger: #b5503f;      /* "bad" stat color (deaths, low K/D)   */
+  --good: #8aa04a;        /* "good" stat color (high K/D)         */
+
+  /* Fonts — change these two lines to restyle all text.            */
+  --font-main: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif; /* body/headers */
+  --font-mono: "Consolas", "SFMono-Regular", ui-monospace, monospace;    /* numbers      */
+
+  --radius: 4px;          /* corner roundness (0 = sharp, 12 = round) */
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-  --mono: "Consolas", "SFMono-Regular", ui-monospace, monospace;
+  --mono: var(--font-mono);
 }
 
 * { box-sizing: border-box; }
@@ -24,7 +35,7 @@ body {
     linear-gradient(180deg, #11130d 0%, var(--bg) 280px),
     repeating-linear-gradient(45deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 9px);
   color: var(--text);
-  font-family: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-main);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
