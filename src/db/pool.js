@@ -47,6 +47,18 @@ function connectionOptions() {
 
 export const pool = mariadb.createPool(connectionOptions());
 
+/** Where are we actually connecting? Safe to log — no password included. */
+export function target() {
+  const o = connectionOptions();
+  return {
+    host: o.host,
+    port: o.port,
+    database: o.database,
+    user: o.user,
+    source: config.db.url ? 'DATABASE_URL/MYSQL_URL' : 'DB_* variables',
+  };
+}
+
 /**
  * Open a single direct connection (bypassing the pool) and run SELECT 1. Used at
  * startup so the retry loop logs the TRUE connection error — DNS not found, host

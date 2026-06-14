@@ -8,11 +8,13 @@ import config from './config.js';
 import { logger } from './logger.js';
 import { createApp } from './app.js';
 import { migrate } from './db/migrate.js';
-import { close as closeDb, probe } from './db/pool.js';
+import { close as closeDb, probe, target } from './db/pool.js';
 
 // Keep trying to reach the DB and apply the schema, backing off between tries.
 // Never throws — the server stays up and serving /health the whole time.
 async function connectWithRetry() {
+  const t = target();
+  logger.info(`Connecting to database at ${t.host}:${t.port} (db="${t.database}", user="${t.user}", from ${t.source})`);
   let attempt = 0;
   // ~2s, 4s, 6s ... capped at 15s. Retries effectively forever so a slow or
   // briefly-down database self-heals instead of taking the whole app down.
