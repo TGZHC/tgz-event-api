@@ -1,0 +1,20 @@
+{
+  "name": "tgz-event-api",
+  "version": "1.0.0",
+  "description": "TGZ Event API — bridges Arma Reforger Server Admin Tools (SAT) events to Discord and a MariaDB-backed stats/leaderboard engine.",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "migrate": "node src/db/migrate.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mariadb": "^3.3.0"
+  }
+}

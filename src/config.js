@@ -1,0 +1,68 @@
+// Central, validated configuration. Reads the environment ONCE, fails fast with
+// a clear message if something required is missing, and freezes the result so
+// nothing mutates config at runtime. This is what stops a typo'd env var from
+// becoming a 3am Railway crash loop.
+
+import { logger } from './logger.js';
+
+function required(name) {
+  const v = process.env[name];
+  if (v === undefined || v === '') {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return v;
+}
+
+function optional(name, fallback = '') {
+  const v = process.env[name];
+  return v === undefined || v === '' ? fallback : v;
+}
+
+function int(name, fallback) {
+  const v = process.env[name];
+  if (v === undefined || v === '') return fallback;
+  const n = Number.parseInt(v, 10);
+  if (Number.isNaN(n)) throw new Error(`Environment variable ${name} must be an integer, got "${v}"`);
+  return n;
+}
+
+let config;
+try {
+  config = Object.freeze({
+    env: optional('NODE_ENV', 'development'),
+    port: int('PORT', 3000),
+    apiToken: required('API_TOKEN'),
+
+    db: Object.freeze({
+      host: required('DB_HOST'),
+      port: int('DB_PORT', 3306),
+      user: required('DB_USER'),
+      password: required('DB_PASSWORD'),
+      database: required('DB_NAME'),
+      connectionLimit: int('DB_CONNECTION_LIMIT', 5),
+    }),
+
+    discord: Object.freeze({
+      default: optional('DISCORD_WEBHOOK_DEFAULT'),
+      kills: optional('DISCORD_WEBHOOK_KILLS'),
+      joins: optional('DISCORD_WEBHOOK_JOINS'),
+      objectives: optional('DISCORD_WEBHOOK_OBJECTIVES'),
+      admin: optional('DISCORD_WEBHOOK_ADMIN'),
+      server: optional('DISCORD_WEBHOOK_SERVER'),
+      alertMention: optional('DISCORD_ALERT_MENTION'),
+    }),
+  });
+} catch (err) {
+  logger.error('Configuration error — refusing to start', { error: err.message });
+  process.exit(1);
+}
+
+// Soft warnings (don't crash, just flag) for things that are merely degraded.
+if (!config.discord.default && !config.discord.kills && !config.discord.joins) {
+  logger.warn('No Discord webhooks configured — events will be stored but not posted to Discord.');
+}
+if (config.apiToken.length < 16) {
+  logger.warn('API_TOKEN is short; use at least 32 random chars in production.');
+}
+
+export default config;
