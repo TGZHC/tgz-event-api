@@ -12,9 +12,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export async function migrate() {
   const sql = await readFile(join(__dirname, 'schema.sql'), 'utf8');
+  // Strip line comments FIRST, then split on ';'. Doing it in this order matters:
+  // a comment may itself contain a ';', which would otherwise split mid-comment
+  // and leave comment text glued to the next statement (a parse error).
   const statements = sql
+    .replace(/--.*$/gm, '')
     .split(';')
-    .map((s) => s.replace(/--.*$/gm, '').trim())
+    .map((s) => s.trim())
     .filter(Boolean);
 
   let conn;

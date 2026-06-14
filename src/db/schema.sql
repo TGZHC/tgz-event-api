@@ -1,5 +1,5 @@
 -- TGZ Event API schema. Idempotent: safe to run on every boot. CREATE statements
--- use IF NOT EXISTS; the ALTER statements that add columns to already-existing
+-- use IF NOT EXISTS. The ALTER statements that add columns to already-existing
 -- tables are allowed to fail harmlessly on re-run (migrate.js ignores
 -- "duplicate column" errors), so upgrading an existing database just works.
 
