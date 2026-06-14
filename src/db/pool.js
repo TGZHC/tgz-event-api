@@ -6,18 +6,43 @@ import mariadb from 'mariadb';
 import config from '../config.js';
 import { logger } from '../logger.js';
 
-export const pool = mariadb.createPool({
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.user,
-  password: config.db.password,
-  database: config.db.database,
-  connectionLimit: config.db.connectionLimit,
-  // Return native JS types; BigInt would otherwise leak from COUNT()/SUM().
-  bigIntAsNumber: true,
-  // Don't let a wedged connection hang a request forever.
-  acquireTimeout: 10_000,
-});
+// Turn config.db into the option object the driver wants. When a connection URL
+// is provided (Railway's MYSQL_URL / DATABASE_URL) we parse it ourselves rather
+// than handing the raw string to the driver, so any URL scheme (mysql://,
+// mariadb://) works the same way.
+function connectionOptions() {
+  const base = {
+    connectionLimit: config.db.connectionLimit,
+    // Return native JS types; BigInt would otherwise leak from COUNT()/SUM().
+    bigIntAsNumber: true,
+    // Don't let a wedged connection hang a request forever.
+    acquireTimeout: 10_000,
+    // MySQL 8/9 default auth (caching_sha2_password) needs the server's public
+    // key when the connection isn't TLS — allow retrieving it.
+    allowPublicKeyRetrieval: true,
+  };
+  if (config.db.url) {
+    const u = new URL(config.db.url);
+    return {
+      ...base,
+      host: u.hostname,
+      port: u.port ? Number(u.port) : 3306,
+      user: decodeURIComponent(u.username),
+      password: decodeURIComponent(u.password),
+      database: u.pathname.replace(/^\//, '') || undefined,
+    };
+  }
+  return {
+    ...base,
+    host: config.db.host,
+    port: config.db.port,
+    user: config.db.user,
+    password: config.db.password,
+    database: config.db.database,
+  };
+}
+
+export const pool = mariadb.createPool(connectionOptions());
 
 /** Run a query and always release the connection. */
 export async function query(sql, params) {

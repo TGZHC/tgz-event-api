@@ -26,6 +26,26 @@ function int(name, fallback) {
   return n;
 }
 
+// Database config supports two styles:
+//  1. A single connection URL (Railway's ${{ MySQL.MYSQL_URL }} / DATABASE_URL).
+//     Easiest — one variable holds host, port, user, password and database.
+//  2. The five individual DB_* variables (fallback if no URL is set).
+// The URL wins when present. pool.js parses the URL into connection options.
+function buildDbConfig() {
+  const url = optional('DATABASE_URL') || optional('MYSQL_URL');
+  if (url) {
+    return { url, connectionLimit: int('DB_CONNECTION_LIMIT', 5) };
+  }
+  return {
+    host: required('DB_HOST'),
+    port: int('DB_PORT', 3306),
+    user: required('DB_USER'),
+    password: required('DB_PASSWORD'),
+    database: required('DB_NAME'),
+    connectionLimit: int('DB_CONNECTION_LIMIT', 5),
+  };
+}
+
 let config;
 try {
   config = Object.freeze({
@@ -33,14 +53,7 @@ try {
     port: int('PORT', 3000),
     apiToken: required('API_TOKEN'),
 
-    db: Object.freeze({
-      host: required('DB_HOST'),
-      port: int('DB_PORT', 3306),
-      user: required('DB_USER'),
-      password: required('DB_PASSWORD'),
-      database: required('DB_NAME'),
-      connectionLimit: int('DB_CONNECTION_LIMIT', 5),
-    }),
+    db: Object.freeze(buildDbConfig()),
 
     discord: Object.freeze({
       default: optional('DISCORD_WEBHOOK_DEFAULT'),
