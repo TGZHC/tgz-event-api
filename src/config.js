@@ -51,7 +51,9 @@ try {
   config = Object.freeze({
     env: optional('NODE_ENV', 'development'),
     port: int('PORT', 3000),
-    apiToken: required('API_TOKEN'),
+    // Trim stray whitespace/newlines that often sneak into pasted env vars —
+    // otherwise a trailing space makes every token comparison silently fail.
+    apiToken: required('API_TOKEN').trim(),
 
     db: Object.freeze(buildDbConfig()),
 
