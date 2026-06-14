@@ -17,6 +17,9 @@ function connectionOptions() {
     bigIntAsNumber: true,
     // Don't let a wedged connection hang a request forever.
     acquireTimeout: 10_000,
+    // Time to establish the initial TCP/handshake before failing with the REAL
+    // error (DNS/refused/auth) instead of a generic pool timeout.
+    connectTimeout: 8_000,
     // MySQL 8/9 default auth (caching_sha2_password) needs the server's public
     // key when the connection isn't TLS — allow retrieving it.
     allowPublicKeyRetrieval: true,
@@ -43,6 +46,20 @@ function connectionOptions() {
 }
 
 export const pool = mariadb.createPool(connectionOptions());
+
+/**
+ * Open a single direct connection (bypassing the pool) and run SELECT 1. Used at
+ * startup so the retry loop logs the TRUE connection error — DNS not found, host
+ * unreachable, access denied, etc. — instead of a generic pool timeout.
+ */
+export async function probe() {
+  const conn = await mariadb.createConnection(connectionOptions());
+  try {
+    await conn.query('SELECT 1');
+  } finally {
+    await conn.end().catch(() => {});
+  }
+}
 
 /** Run a query and always release the connection. */
 export async function query(sql, params) {

@@ -8,7 +8,7 @@ import config from './config.js';
 import { logger } from './logger.js';
 import { createApp } from './app.js';
 import { migrate } from './db/migrate.js';
-import { close as closeDb, ping } from './db/pool.js';
+import { close as closeDb, probe } from './db/pool.js';
 
 // Keep trying to reach the DB and apply the schema, backing off between tries.
 // Never throws — the server stays up and serving /health the whole time.
@@ -19,13 +19,15 @@ async function connectWithRetry() {
   for (;;) {
     attempt += 1;
     try {
-      await ping();
+      await probe();
       await migrate();
       logger.info('Database connected and schema applied.', { attempt });
       return;
     } catch (err) {
       const waitMs = Math.min(attempt * 2000, 15_000);
-      logger.warn('Database not ready yet, will retry', { attempt, waitMs, error: err.message });
+      // Put the real reason in the message text so it's visible even where the
+      // log viewer only shows the message and hides structured fields.
+      logger.warn(`DB connect failed (attempt ${attempt}): ${err.code || ''} ${err.message} — retrying in ${waitMs}ms`);
       await new Promise((r) => setTimeout(r, waitMs));
     }
   }
