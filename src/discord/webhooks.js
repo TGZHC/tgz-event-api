@@ -15,6 +15,8 @@ const ROUTES = {
   objectives: config.discord.objectives || config.discord.default,
   admin: config.discord.admin || config.discord.default,
   server: config.discord.server || config.discord.default,
+  // Leaderboard recaps prefer their own channel, else the objectives channel.
+  leaderboard: config.discord.leaderboard || config.discord.objectives || config.discord.default,
   default: config.discord.default,
 };
 

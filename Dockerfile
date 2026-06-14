@@ -9,6 +9,8 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 COPY src ./src
+COPY public ./public
+COPY messages.json ./messages.json
 
 ENV NODE_ENV=production
 EXPOSE 3000

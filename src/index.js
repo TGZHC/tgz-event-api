@@ -9,6 +9,7 @@ import { logger } from './logger.js';
 import { createApp } from './app.js';
 import { migrate } from './db/migrate.js';
 import { close as closeDb, probe, target } from './db/pool.js';
+import { startScheduler } from './stats/scheduler.js';
 
 // Keep trying to reach the DB and apply the schema, backing off between tries.
 // Never throws — the server stays up and serving /health the whole time.
@@ -24,6 +25,7 @@ async function connectWithRetry() {
       await probe();
       await migrate();
       logger.info('Database connected and schema applied.', { attempt });
+      startScheduler(); // safe to start now that the DB + meta table exist
       return;
     } catch (err) {
       const waitMs = Math.min(attempt * 2000, 15_000);

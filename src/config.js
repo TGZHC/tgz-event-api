@@ -64,7 +64,18 @@ try {
       objectives: optional('DISCORD_WEBHOOK_OBJECTIVES'),
       admin: optional('DISCORD_WEBHOOK_ADMIN'),
       server: optional('DISCORD_WEBHOOK_SERVER'),
+      leaderboard: optional('DISCORD_WEBHOOK_LEADERBOARD'),
       alertMention: optional('DISCORD_ALERT_MENTION'),
+    }),
+
+    // Automated leaderboard recaps. Each can be toggled; they post the
+    // just-completed period when it rolls over (UTC).
+    schedule: Object.freeze({
+      daily: optional('SCHEDULE_DAILY', 'true') !== 'false',
+      weekly: optional('SCHEDULE_WEEKLY', 'true') !== 'false',
+      monthly: optional('SCHEDULE_MONTHLY', 'true') !== 'false',
+      sort: optional('SCHEDULE_SORT', 'kills'),
+      includeWeapons: optional('SCHEDULE_WEAPONS', 'true') !== 'false',
     }),
   });
 } catch (err) {

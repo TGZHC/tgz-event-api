@@ -1,38 +1,28 @@
-// Player kill / death. Updates Discord and stats. Team kills are flagged so they
-// both stand out in the feed (orange + ⚠️) and count toward a separate stat that
-// a future anti-TK leaderboard or admin report can use.
+// Player kill / death. Posts to Discord and records stats atomically via
+// processKill: victim death + streak reset, killer kill/headshot/weapon/streak/
+// longest-kill record. Team kills are flagged (orange + ⚠️) and counted
+// separately without building a kill streak.
 
 import { pick, playerIdentity } from '../normalize.js';
 import { killEmbed } from '../../discord/embeds.js';
 import { sendEmbed } from '../../discord/webhooks.js';
-import { recordStat } from '../../stats/repository.js';
+import { processKill } from '../../stats/repository.js';
 
 export async function playerKill(event) {
   const data = event.data ?? event;
   const killer = playerIdentity(data, 'killer');
   const victim = playerIdentity(data, 'victim');
-  // Fallbacks for flatter payloads.
   if (!killer.id) Object.assign(killer, playerIdentity(data, 'instigator'));
   if (!victim.id) Object.assign(victim, playerIdentity(data, 'target'));
 
   const teamkill = Boolean(pick(data, 'teamkill', 'friendlyFire', 'isTeamKill'));
+  const headshot = Boolean(pick(data, 'headshot', 'isHeadshot', 'headShot'));
   const weapon = pick(data, 'weapon', 'weaponName', 'killerWeapon');
   const distance = pick(data, 'distance', 'killDistance');
 
   sendEmbed('kills', killEmbed({
-    killer: killer.name, victim: victim.name, weapon, distance, teamkill,
+    killer: killer.name, victim: victim.name, weapon, distance, headshot, teamkill,
   }));
 
-  // Self-kills / environment deaths: only the victim's death counts.
-  const tasks = [];
-  if (victim.id) {
-    tasks.push(recordStat({ playerId: victim.id, name: victim.name, increments: { deaths: 1 } }));
-  }
-  if (killer.id && killer.id !== victim.id) {
-    tasks.push(recordStat({
-      playerId: killer.id, name: killer.name,
-      increments: teamkill ? { teamkills: 1 } : { kills: 1 },
-    }));
-  }
-  await Promise.all(tasks);
+  await processKill({ killer, victim, weapon, distance, headshot, teamkill });
 }

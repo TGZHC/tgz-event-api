@@ -2,6 +2,8 @@
 // without starting a server or opening real sockets.
 
 import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { logger } from './logger.js';
 import { eventsRouter } from './routes/events.js';
 import { healthRouter } from './routes/health.js';
@@ -22,11 +24,18 @@ export function createApp() {
     next();
   });
 
-  app.get('/', (_req, res) => res.json({ name: 'TGZ Event API', status: 'ok' }));
+  // JSON status for API consumers / uptime checks.
+  app.get('/api/status', (_req, res) => res.json({ name: 'TGZ Event API', status: 'ok' }));
+
   app.use('/health', healthRouter);
   app.use('/events', eventsRouter);
   app.use('/stats', statsRouter);
   app.use('/test', testRouter);
+
+  // The public stats website. Served from /public at the site root, so visiting
+  // the domain shows the leaderboards page. Healthcheck on "/" gets index.html.
+  const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
+  app.use(express.static(publicDir));
 
   app.use(notFound);
   app.use(errorHandler);

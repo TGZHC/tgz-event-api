@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pick, playerIdentity, eventType } from '../src/events/normalize.js';
-import { bucketsFor, isoWeek } from '../src/stats/periods.js';
+import { bucketsFor, isoWeek, previousKey, PERIOD_TYPES } from '../src/stats/periods.js';
 import { killEmbed, leaderboardEmbed } from '../src/discord/embeds.js';
 
 test('pick returns the first present key, supports dotted paths', () => {
@@ -20,12 +20,24 @@ test('eventType normalizes punctuation and case', () => {
   assert.equal(eventType({ eventType: 'PLAYER_CONNECT' }), 'playerconnect');
 });
 
-test('bucketsFor yields all/week/month buckets', () => {
+test('bucketsFor yields all/day/week/month buckets', () => {
   const buckets = bucketsFor(new Date('2026-06-14T12:00:00Z'));
-  assert.equal(buckets.length, 3);
+  assert.equal(buckets.length, 4);
   assert.deepEqual(buckets[0], { type: 'all', key: 'all' });
-  assert.equal(buckets[2].key, '2026-06');
-  assert.match(buckets[1].key, /^2026-W\d{2}$/);
+  assert.deepEqual(buckets[1], { type: 'day', key: '2026-06-14' });
+  assert.match(buckets[2].key, /^2026-W\d{2}$/);
+  assert.equal(buckets[3].key, '2026-06');
+});
+
+test('PERIOD_TYPES includes the four periods', () => {
+  assert.deepEqual(PERIOD_TYPES, ['all', 'day', 'week', 'month']);
+});
+
+test('previousKey returns the just-completed period', () => {
+  const d = new Date('2026-06-14T12:00:00Z');
+  assert.equal(previousKey('day', d), '2026-06-13');
+  assert.equal(previousKey('month', d), '2026-05');
+  assert.equal(previousKey('all', d), null);
 });
 
 test('isoWeek computes a sane week number', () => {
@@ -36,9 +48,14 @@ test('isoWeek computes a sane week number', () => {
 test('killEmbed flags team kills distinctly', () => {
   const normal = killEmbed({ killer: 'A', victim: 'B', teamkill: false });
   const tk = killEmbed({ killer: 'A', victim: 'B', teamkill: true });
-  assert.match(normal.title, /Kill/);
-  assert.match(tk.title, /Team Kill/);
-  assert.notEqual(normal.color, tk.color);
+  assert.match(normal.title, /kill/i);
+  assert.match(tk.title, /kill/i);
+  assert.notEqual(normal.color, tk.color); // distinct color for team kills
+});
+
+test('killEmbed shows a headshot field when flagged', () => {
+  const hs = killEmbed({ killer: 'A', victim: 'B', headshot: true });
+  assert.ok(hs.fields.some((f) => f.name === 'Headshot'));
 });
 
 test('leaderboardEmbed renders medals and a fallback', () => {

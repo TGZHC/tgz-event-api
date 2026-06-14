@@ -17,8 +17,10 @@ export async function playerJoin(event) {
     max: pick(data, 'maxPlayers', 'slots'),
   }));
   if (id) {
-    // Register identity early so later events have a name to attach.
+    // Register identity early so later events have a name to attach, and count
+    // the session so "most active players" leaderboards work.
     await transaction((conn) => upsertPlayer(conn, id, name));
+    await recordStat({ playerId: id, name, increments: { sessions: 1 } });
   }
 }
 

@@ -18,12 +18,24 @@ export async function migrate() {
     .filter(Boolean);
 
   let conn;
+  // Errors that just mean "this upgrade step was already applied" — safe to skip
+  // so the schema converges whether the DB is brand new or being upgraded.
+  // 1060 = duplicate column, 1050 = table exists, 1061 = dup key, 1091 = can't drop.
+  const BENIGN = new Set([1050, 1060, 1061, 1091]);
+
   try {
     conn = await pool.getConnection();
+    let applied = 0;
     for (const stmt of statements) {
-      await conn.query(stmt);
+      try {
+        await conn.query(stmt);
+        applied += 1;
+      } catch (err) {
+        if (BENIGN.has(err.errno)) continue; // already-applied upgrade step
+        throw err;
+      }
     }
-    logger.info('Database schema is up to date.', { statements: statements.length });
+    logger.info('Database schema is up to date.', { statements: statements.length, applied });
   } finally {
     if (conn) conn.release();
   }
