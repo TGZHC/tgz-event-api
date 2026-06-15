@@ -12,12 +12,12 @@ const PERIODS = [
 const SORTS = [
   { key: 'kills', label: 'Kills' },
   { key: 'kd', label: 'K/D' },
-  { key: 'headshots', label: 'Headshots' },
   { key: 'kill_streak_best', label: 'Best Streak' },
   { key: 'longest_kill_m', label: 'Longest Kill' },
   { key: 'playtime_seconds', label: 'Playtime' },
-  { key: 'captures', label: 'Captures' },
+  { key: 'sessions', label: 'Sessions' },
   { key: 'teamkills', label: 'Team Kills' },
+  { key: 'suicides', label: 'Suicides' },
 ];
 
 // --- helpers ---
@@ -79,7 +79,7 @@ function lbTable(rows) {
     <thead><tr>
       <th class="rank">#</th><th>Player</th>
       <th class="num">Kills</th><th class="num">Deaths</th><th class="num">K/D</th>
-      <th class="num hide-sm">TK</th><th class="num hide-sm">HS</th><th class="num hide-sm">Streak</th><th class="num hide-sm">Longest</th>
+      <th class="num hide-sm">TK</th><th class="num hide-sm">Suicides</th><th class="num hide-sm">Streak</th><th class="num hide-sm">Longest</th><th class="num hide-sm">Sessions</th>
     </tr></thead><tbody>
     ${rows.map((r, i) => `<tr>
       <td class="rank ${i < 3 ? 'medal' : ''}">${medal(i)}</td>
@@ -88,9 +88,10 @@ function lbTable(rows) {
       <td class="num">${r.deaths}</td>
       <td class="num ${kdClass(r.kd)}">${r.kd}</td>
       <td class="num hide-sm ${r.teamkills ? 'kd-bad' : ''}">${r.teamkills}</td>
-      <td class="num hide-sm">${r.headshots}</td>
+      <td class="num hide-sm">${r.suicides}</td>
       <td class="num hide-sm">${r.kill_streak_best}</td>
       <td class="num hide-sm">${r.longest_kill_m ? r.longest_kill_m + 'm' : '—'}</td>
+      <td class="num hide-sm">${r.sessions}</td>
     </tr>`).join('')}
     </tbody></table>`;
 }
@@ -145,10 +146,11 @@ function drawPlayers(filter) {
   if (filter) list = list.filter((p) => p.name.toLowerCase().includes(filter));
   list = list.slice(0, 100);
   document.getElementById('plist').innerHTML = list.length
-    ? `<table><thead><tr><th>Player</th><th class="num">Kills</th><th class="num">Deaths</th><th class="num hide-sm">First seen</th></tr></thead><tbody>
+    ? `<table><thead><tr><th>Player</th><th class="num">Kills</th><th class="num">Deaths</th><th class="num hide-sm">Sessions</th><th class="num hide-sm">First seen</th></tr></thead><tbody>
        ${list.map((p) => `<tr>
          <td class="pname"><a href="#/player/${encodeURIComponent(p.player_id)}">${esc(p.name)}</a></td>
          <td class="num">${p.kills}</td><td class="num">${p.deaths}</td>
+         <td class="num hide-sm">${p.sessions ?? 0}</td>
          <td class="num hide-sm">${fmtDate(p.first_seen)}</td></tr>`).join('')}
        </tbody></table>`
     : '<div class="empty">No operators found.</div>';
@@ -176,10 +178,10 @@ async function renderProfile(id) {
       ${stat(t.deaths, 'Deaths')}
       ${stat(t.kd, 'K/D')}
       ${stat(t.teamkills, 'Team Kills')}
-      ${stat(t.headshots, 'Headshots')}
+      ${stat(t.suicides, 'Suicides')}
       ${stat(t.kill_streak_best, 'Best Streak')}
       ${stat(t.longest_kill_m ? t.longest_kill_m + 'm' : '—', 'Longest Kill')}
-      ${stat(t.captures, 'Captures')}
+      ${stat(t.sessions, 'Sessions')}
       ${stat(fmtPlaytime(t.playtime_seconds), 'Playtime')}
     </div>
     <div class="card chart-card">
@@ -221,8 +223,8 @@ function historyChart(history) {
 function dayTable(history) {
   if (!history || !history.length) return '<div class="empty">No daily history yet.</div>';
   const rows = [...history].reverse();
-  return `<table><thead><tr><th>Date</th><th class="num">Kills</th><th class="num">Deaths</th><th class="num">K/D</th><th class="num hide-sm">HS</th><th class="num hide-sm">Captures</th></tr></thead><tbody>
-    ${rows.map((h) => `<tr><td>${esc(h.date)}</td><td class="num">${h.kills}</td><td class="num">${h.deaths}</td><td class="num ${kdClass(h.kd)}">${h.kd}</td><td class="num hide-sm">${h.headshots}</td><td class="num hide-sm">${h.captures}</td></tr>`).join('')}
+  return `<table><thead><tr><th>Date</th><th class="num">Kills</th><th class="num">Deaths</th><th class="num">K/D</th><th class="num hide-sm">TK</th><th class="num hide-sm">Suicides</th></tr></thead><tbody>
+    ${rows.map((h) => `<tr><td>${esc(h.date)}</td><td class="num">${h.kills}</td><td class="num">${h.deaths}</td><td class="num ${kdClass(h.kd)}">${h.kd}</td><td class="num hide-sm">${h.teamkills}</td><td class="num hide-sm">${h.suicides}</td></tr>`).join('')}
     </tbody></table>`;
 }
 

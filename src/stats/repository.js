@@ -7,7 +7,7 @@ import { query, transaction } from '../db/pool.js';
 import { bucketsFor, currentKey } from './periods.js';
 
 // Columns that ACCUMULATE (a += b).
-const SUM_COLUMNS = new Set(['kills', 'deaths', 'teamkills', 'captures', 'headshots', 'sessions', 'playtime_seconds']);
+const SUM_COLUMNS = new Set(['kills', 'deaths', 'teamkills', 'suicides', 'captures', 'headshots', 'sessions', 'playtime_seconds']);
 // Columns that keep a RECORD (max seen): a = GREATEST(a, b).
 const MAX_COLUMNS = new Set(['longest_kill_m', 'kill_streak_best']);
 // Everything sortable on a leaderboard.
@@ -70,13 +70,15 @@ export async function recordStat({ playerId, name, increments, date = new Date()
  * headshot / weapon / streak / longest-kill record. Team kills count separately
  * and don't build a streak.
  */
-export async function processKill({ killer, victim, weapon, distance, headshot, teamkill, date = new Date() }) {
+export async function processKill({ killer, victim, weapon, distance, headshot, teamkill, suicide, date = new Date() }) {
   await transaction(async (conn) => {
-    // Victim: a death, and their kill streak resets.
+    // Victim: a death, and their kill streak resets. A self/world death also counts a suicide.
     if (victim?.id) {
       await upsertPlayer(conn, victim.id, victim.name);
       await conn.query('UPDATE players SET current_streak = 0 WHERE player_id = ?', [victim.id]);
-      await bumpBuckets(conn, victim.id, date, { deaths: 1 }, {});
+      const victimSums = { deaths: 1 };
+      if (suicide) victimSums.suicides = 1;
+      await bumpBuckets(conn, victim.id, date, victimSums, {});
     }
 
     // Killer (ignore self-kills for offensive credit).
@@ -107,8 +109,8 @@ export async function leaderboard({ period = 'all', sort = 'kills', limit = 10, 
   const sortCol = SORTABLE.has(sort) ? sort : 'kills';
   const periodKey = key || currentKey(period);
   const rows = await query(
-    `SELECT p.name, s.player_id, s.kills, s.deaths, s.teamkills, s.captures, s.headshots,
-            s.longest_kill_m, s.kill_streak_best, s.playtime_seconds
+    `SELECT p.name, s.player_id, s.kills, s.deaths, s.teamkills, s.suicides, s.captures, s.headshots,
+            s.longest_kill_m, s.kill_streak_best, s.sessions, s.playtime_seconds
        FROM player_stats s
        JOIN players p ON p.player_id = s.player_id
       WHERE s.period_type = ? AND s.period_key = ?
@@ -133,8 +135,8 @@ export async function weaponLeaderboard({ period = 'all', limit = 10, key } = {}
 /** All-period stats for a single player. */
 export async function getPlayer(playerId) {
   const rows = await query(
-    `SELECT s.period_type, s.period_key, s.kills, s.deaths, s.teamkills, s.captures, s.headshots,
-            s.longest_kill_m, s.kill_streak_best, s.playtime_seconds, p.name
+    `SELECT s.period_type, s.period_key, s.kills, s.deaths, s.teamkills, s.suicides, s.captures, s.headshots,
+            s.longest_kill_m, s.kill_streak_best, s.sessions, s.playtime_seconds, p.name
        FROM player_stats s JOIN players p ON p.player_id = s.player_id
       WHERE s.player_id = ?`,
     [playerId],
@@ -143,9 +145,9 @@ export async function getPlayer(playerId) {
   const out = { player_id: playerId, name: rows[0].name, periods: {} };
   for (const r of rows) {
     out.periods[r.period_type === 'all' ? 'all' : `${r.period_type}:${r.period_key}`] = {
-      kills: r.kills, deaths: r.deaths, teamkills: r.teamkills, captures: r.captures,
+      kills: r.kills, deaths: r.deaths, teamkills: r.teamkills, suicides: r.suicides, captures: r.captures,
       headshots: r.headshots, longest_kill_m: r.longest_kill_m, kill_streak_best: r.kill_streak_best,
-      playtime_seconds: r.playtime_seconds,
+      sessions: r.sessions, playtime_seconds: r.playtime_seconds,
       kd: r.deaths ? +(r.kills / r.deaths).toFixed(2) : r.kills,
     };
   }
@@ -156,7 +158,8 @@ export async function getPlayer(playerId) {
 export async function listPlayers({ limit = 1000 } = {}) {
   return query(
     `SELECT p.player_id, p.name, p.first_seen, p.last_seen,
-            COALESCE(s.kills, 0) AS kills, COALESCE(s.deaths, 0) AS deaths
+            COALESCE(s.kills, 0) AS kills, COALESCE(s.deaths, 0) AS deaths,
+            COALESCE(s.sessions, 0) AS sessions
        FROM players p
        LEFT JOIN player_stats s
          ON s.player_id = p.player_id AND s.period_type = 'all' AND s.period_key = 'all'
@@ -179,14 +182,14 @@ export async function getPlayerProfile(playerId) {
   if (players.length === 0) return null;
 
   const statRows = await query(
-    `SELECT period_type, period_key, kills, deaths, teamkills, captures, headshots,
-            longest_kill_m, kill_streak_best, playtime_seconds
+    `SELECT period_type, period_key, kills, deaths, teamkills, suicides, captures, headshots,
+            longest_kill_m, kill_streak_best, sessions, playtime_seconds
        FROM player_stats WHERE player_id = ?`,
     [playerId],
   );
 
   const withKd = (r) => ({ ...r, kd: r.deaths ? +(r.kills / r.deaths).toFixed(2) : r.kills });
-  const blank = { kills: 0, deaths: 0, teamkills: 0, captures: 0, headshots: 0, longest_kill_m: 0, kill_streak_best: 0, playtime_seconds: 0, kd: 0 };
+  const blank = { kills: 0, deaths: 0, teamkills: 0, suicides: 0, captures: 0, headshots: 0, longest_kill_m: 0, kill_streak_best: 0, sessions: 0, playtime_seconds: 0, kd: 0 };
 
   const all = statRows.find((r) => r.period_type === 'all');
   const history = statRows

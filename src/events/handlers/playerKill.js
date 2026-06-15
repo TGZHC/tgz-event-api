@@ -28,6 +28,9 @@ export async function playerKill(event) {
   const killerId = pick(data, 'killerId', 'killerGuid', 'killerUid') || killerName;
   const killer = { id: killerIsPlayer ? killerId : undefined, name: killerName };
 
+  // A self / world death (or being your own killer) is a suicide.
+  const suicide = killerIsWorld || (killerId && killerId === victim.id) || killerName === victim.name;
+
   // `friendly` (TGZ_Admin / SAT) marks a team kill (friendly fire).
   const teamkill = pick(data, 'friendly', 'teamkill', 'friendlyFire', 'isTeamKill') === true;
 
@@ -39,5 +42,5 @@ export async function playerKill(event) {
   const at = event.timestamp ? new Date(Number(event.timestamp) * 1000) : new Date();
 
   sendEmbed('kills', killEmbed({ killer: killer.name, victim: victim.name, weapon, distance, headshot, teamkill, at }));
-  await processKill({ killer, victim, weapon, distance, headshot, teamkill, date: at });
+  await processKill({ killer, victim, weapon, distance, headshot, teamkill, suicide, date: at });
 }

@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS player_stats (
   kills            INT          NOT NULL DEFAULT 0,
   deaths           INT          NOT NULL DEFAULT 0,
   teamkills        INT          NOT NULL DEFAULT 0,
+  suicides         INT          NOT NULL DEFAULT 0,
   captures         INT          NOT NULL DEFAULT 0,
   headshots        INT          NOT NULL DEFAULT 0,
   sessions         INT          NOT NULL DEFAULT 0,
@@ -70,10 +71,10 @@ CREATE TABLE IF NOT EXISTS meta (
 ALTER TABLE players ADD COLUMN current_streak INT NOT NULL DEFAULT 0;
 ALTER TABLE player_stats ADD COLUMN headshots INT NOT NULL DEFAULT 0;
 ALTER TABLE player_stats ADD COLUMN sessions INT NOT NULL DEFAULT 0;
+ALTER TABLE player_stats ADD COLUMN suicides INT NOT NULL DEFAULT 0;
 ALTER TABLE player_stats ADD COLUMN longest_kill_m INT NOT NULL DEFAULT 0;
 ALTER TABLE player_stats ADD COLUMN kill_streak_best INT NOT NULL DEFAULT 0;
 
--- Stats are keyed by player NAME (kills carry no UUID). Earlier join events made
--- rows keyed by UUID, which show up as duplicate players. Remove any row whose id
--- isn't its own name; their stats cascade-delete. Idempotent: a no-op once clean.
-DELETE FROM players WHERE name IS NOT NULL AND player_id <> name;
+-- NOTE: players are keyed by their stable identity UUID (sent on every event).
+-- Do NOT prune rows where player_id <> name — that would delete every UUID-keyed
+-- player. (An earlier name-keying era had such a cleanup; it has been removed.)
