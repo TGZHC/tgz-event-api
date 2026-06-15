@@ -13,8 +13,8 @@ import { logger } from '../logger.js';
 
 const DEFAULTS = {
   events: {
-    kill: { title: '💀 Kill', color: '#e74c3c' },
-    teamkill: { title: '⚠️ Team Kill', color: '#ff8c00' },
+    kill: { title: '💀 Combat Report', color: '#b5503f' },
+    teamkill: { title: '⚠️ Combat Report — Friendly Fire', color: '#ff8c00' },
     join: { title: '🟢 Player Joined', color: '#2ecc71' },
     leave: { title: '⚪ Player Left', color: '#95a5a6' },
     objective: { title: '🚩 Objective Captured', color: '#3498db' },

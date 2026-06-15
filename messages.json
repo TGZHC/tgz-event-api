@@ -10,8 +10,8 @@
   ],
 
   "events": {
-    "kill":      { "title": "Kill Confirmed",            "color": "#7a8b3c" },
-    "teamkill":  { "title": "Fratricide — Friendly Fire", "color": "#b5503f" },
+    "kill":      { "title": "💀 Combat Report",                 "color": "#b5503f" },
+    "teamkill":  { "title": "⚠️ Combat Report — Friendly Fire", "color": "#ff8c00" },
     "join":      { "title": "Operator Connected",         "color": "#4b5320" },
     "leave":     { "title": "Operator Disconnected",      "color": "#5a5a4a" },
     "objective": { "title": "Objective Secured",          "color": "#c2b280" },

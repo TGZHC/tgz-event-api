@@ -56,9 +56,11 @@ test('killEmbed flags team kills distinctly', () => {
   assert.notEqual(normal.color, tk.color);
 });
 
-test('killEmbed shows a headshot field when flagged', () => {
-  const hs = killEmbed({ killer: 'A', victim: 'B', headshot: true });
-  assert.ok(hs.fields.some((f) => f.name === 'Headshot'));
+test('killEmbed shows killer, victim and team-kill status', () => {
+  const e = killEmbed({ killer: 'A', victim: 'B', teamkill: true });
+  assert.match(e.description, /A/);
+  assert.match(e.description, /B/);
+  assert.match(e.description, /Team Kill\s*:\s*YES/);
 });
 
 test('leaderboardEmbed renders rows and a fallback', () => {

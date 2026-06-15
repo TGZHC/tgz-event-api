@@ -21,15 +21,20 @@ function styleFor(key) {
 
 export function killEmbed({ killer, victim, weapon, distance, headshot, teamkill, at }) {
   const style = styleFor(teamkill ? 'teamkill' : 'kill');
-  const fields = [
-    { name: 'Killer', value: killer || 'Unknown', inline: true },
-    { name: 'Victim', value: victim || 'Unknown', inline: true },
-    { name: 'Team Kill', value: teamkill ? 'Yes' : 'No', inline: true },
+  // "Combat report" card: a code block so it reads like a clean dossier entry.
+  const pad = (s) => (s + ' '.repeat(10)).slice(0, 10);
+  const lines = [
+    `${pad('Killer')}: ${killer || 'Unknown'}`,
+    `${pad('Victim')}: ${victim || 'Unknown'}`,
+    `${pad('Team Kill')}: ${teamkill ? 'YES ⚠️' : 'No'}`,
   ];
-  if (weapon) fields.push({ name: 'Weapon', value: weapon, inline: true });
-  if (distance != null) fields.push({ name: 'Distance', value: `${Math.round(distance)} m`, inline: true });
-  if (headshot) fields.push({ name: 'Headshot', value: '🎯 Yes', inline: true });
-  return base(render(style.title), style.color, fields, at ? { timestamp: new Date(at).toISOString() } : {});
+  if (weapon) lines.push(`${pad('Weapon')}: ${weapon}`);
+  if (distance != null) lines.push(`${pad('Distance')}: ${Math.round(distance)} m`);
+  if (headshot) lines.push(`${pad('Headshot')}: Yes`);
+  return base(render(style.title), style.color, [], {
+    description: '```yaml\n' + lines.join('\n') + '\n```',
+    ...(at ? { timestamp: new Date(at).toISOString() } : {}),
+  });
 }
 
 export function joinEmbed({ player, players, max }) {
