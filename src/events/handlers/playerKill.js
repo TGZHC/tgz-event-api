@@ -12,8 +12,10 @@ export async function playerKill(event) {
   const data = event.data ?? event;
   const killer = playerIdentity(data, 'killer');
   const victim = playerIdentity(data, 'victim');
-  if (!killer.id) Object.assign(killer, playerIdentity(data, 'instigator'));
-  if (!victim.id) Object.assign(victim, playerIdentity(data, 'target'));
+  // Fill ONLY missing fields from alternate spellings — never overwrite a value
+  // we already found with an undefined one.
+  fillMissing(killer, playerIdentity(data, 'instigator'));
+  fillMissing(victim, playerIdentity(data, 'target'));
 
   const teamkill = Boolean(pick(data, 'teamkill', 'friendlyFire', 'isTeamKill'));
   const headshot = Boolean(pick(data, 'headshot', 'isHeadshot', 'headShot'));
@@ -25,4 +27,10 @@ export async function playerKill(event) {
   }));
 
   await processKill({ killer, victim, weapon, distance, headshot, teamkill });
+}
+
+// Copy id/name from `alt` only where `base` is still empty.
+function fillMissing(base, alt) {
+  if (!base.id && alt.id) base.id = alt.id;
+  if (!base.name && alt.name) base.name = alt.name;
 }

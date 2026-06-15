@@ -9,25 +9,44 @@ import { eventsRouter } from './routes/events.js';
 import { healthRouter } from './routes/health.js';
 import { statsRouter } from './routes/stats.js';
 import { testRouter } from './routes/diagnostics.js';
+import { requireAuth, isAuthorized } from './middleware/auth.js';
+import { handleEvent } from './events/router.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
+
+// Live diagnostics (in-memory, reset on redeploy). Lets us SEE whether SAT is
+// reaching the server at all, regardless of path or auth — exposed via /api/status.
+const diag = {
+  posts_received: 0,
+  posts_unauthorized: 0,
+  last_post_path: null,
+  last_post_at: null,
+  last_post_header_names: null,
+};
 
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
 
-  // SAT posts JSON. Cap body size to shrug off malformed/huge payloads.
-  app.use(express.json({ limit: '256kb' }));
+  // SAT posts JSON. Accept it even if the client sends an odd/missing
+  // Content-Type, and never crash on a malformed body.
+  app.use(express.json({ limit: '256kb', type: () => true }));
 
-  // One-line request log at debug level.
+  // Count every POST (any path, any auth) so we can confirm SAT is talking to us.
   app.use((req, _res, next) => {
+    if (req.method === 'POST') {
+      diag.posts_received += 1;
+      diag.last_post_path = req.path;
+      diag.last_post_at = new Date().toISOString();
+      diag.last_post_header_names = Object.keys(req.headers);
+      if (!isAuthorized(req)) diag.posts_unauthorized += 1;
+    }
     logger.debug('request', { method: req.method, path: req.path });
     next();
   });
 
-  // JSON status for API consumers / uptime checks. Includes event counts so you
-  // can confirm in a browser whether SAT events are actually arriving.
+  // JSON status — confirm in a browser whether SAT events are arriving.
   app.get('/api/status', async (_req, res) => {
-    const body = { name: 'TGZ Event API', status: 'ok' };
+    const body = { name: 'TGZ Event API', status: 'ok', ...diag };
     try {
       const { eventCounts } = await import('./stats/repository.js');
       Object.assign(body, await eventCounts());
@@ -42,8 +61,22 @@ export function createApp() {
   app.use('/stats', statsRouter);
   app.use('/test', testRouter);
 
-  // The public stats website. Served from /public at the site root, so visiting
-  // the domain shows the leaderboards page. Healthcheck on "/" gets index.html.
+  // Catch-all for SAT events. `eventsApiAddress` has no path, so SAT may POST to
+  // "/" or to "/<event_name>". This accepts a POST to ANY path, using the path
+  // as the event type when the body doesn't carry one.
+  app.post('*', requireAuth, async (req, res, next) => {
+    try {
+      const event = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? { ...req.body } : {};
+      const pathType = req.path.replace(/^\/+/, '');
+      if (!event.type && pathType && pathType !== 'events') event.type = pathType;
+      const result = await handleEvent(event);
+      res.status(202).json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // The public stats website, served from /public at the site root.
   const publicDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
   app.use(express.static(publicDir));
 

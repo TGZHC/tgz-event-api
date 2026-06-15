@@ -31,6 +31,21 @@ const HANDLERS = {
   admincommand: adminAction,
   serverhealth: serverHealth,
   serverstatus: serverHealth,
+
+  // --- Arma Reforger Server Admin Tools (SAT) event names ---
+  // eventType() lowercases and strips underscores, so
+  // "serveradmintools_player_killed" -> "serveradmintoolsplayerkilled".
+  serveradmintoolsplayerkilled: playerKill,
+  serveradmintoolsplayerjoined: playerJoin,
+  serveradmintoolsplayerleft: playerLeave,
+  serveradmintoolsplayerdisconnected: playerLeave,
+  serveradmintoolsconflictbasecaptured: objectiveCapture,
+  serveradmintoolsadminaction: adminAction,
+  serveradmintoolsserverfpslow: serverHealth,
+  serveradmintoolsgamestarted: serverHealth,
+  serveradmintoolsgameended: serverHealth,
+  serveradmintoolsvotestarted: serverHealth,
+  serveradmintoolsvoteended: serverHealth,
 };
 
 /** Persist then dispatch. Returns { stored, handled, type }. */

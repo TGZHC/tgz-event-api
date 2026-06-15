@@ -23,10 +23,13 @@ export function extractToken(req) {
   return headerToken ? headerToken.trim() : '';
 }
 
-export function requireAuth(req, res, next) {
+/** True if the request carries a valid token. */
+export function isAuthorized(req) {
   const token = extractToken(req);
-  if (token && safeEqual(token, config.apiToken)) {
-    return next();
-  }
+  return Boolean(token && safeEqual(token, config.apiToken));
+}
+
+export function requireAuth(req, res, next) {
+  if (isAuthorized(req)) return next();
   return res.status(401).json({ error: 'unauthorized' });
 }
