@@ -17,6 +17,7 @@ const SORTS = [
   { key: 'longest_kill_m', label: 'Longest Kill' },
   { key: 'playtime_seconds', label: 'Playtime' },
   { key: 'captures', label: 'Captures' },
+  { key: 'team_kills', label: 'TeamKills' },
 ];
 
 // --- helpers ---
