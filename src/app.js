@@ -21,6 +21,8 @@ const diag = {
   last_post_path: null,
   last_post_at: null,
   last_post_header_names: null,
+  last_post_query: null,
+  last_post_body: null, // raw body of the last POST, capped — reveals SAT's format
 };
 
 export function createApp() {
@@ -38,6 +40,12 @@ export function createApp() {
       diag.last_post_path = req.path;
       diag.last_post_at = new Date().toISOString();
       diag.last_post_header_names = Object.keys(req.headers);
+      diag.last_post_query = req.query;
+      try {
+        diag.last_post_body = JSON.stringify(req.body).slice(0, 2000);
+      } catch {
+        diag.last_post_body = String(req.body).slice(0, 2000);
+      }
       if (!isAuthorized(req)) diag.posts_unauthorized += 1;
     }
     logger.debug('request', { method: req.method, path: req.path });

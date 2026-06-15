@@ -20,7 +20,14 @@ export function extractToken(req) {
     return (m ? m[1] : auth).trim();
   }
   const headerToken = req.get('x-api-token');
-  return headerToken ? headerToken.trim() : '';
+  if (headerToken) return headerToken.trim();
+  // Arma Reforger's REST API can't send custom headers, so SAT must pass the
+  // token in the query string or JSON body. Accept the common field names.
+  const q = req.query && (req.query.token || req.query.apiToken || req.query.eventsApiToken);
+  if (q) return String(q).trim();
+  const b = req.body && (req.body.token || req.body.apiToken || req.body.eventsApiToken);
+  if (b) return String(b).trim();
+  return '';
 }
 
 /** True if the request carries a valid token. */
