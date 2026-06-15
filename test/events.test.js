@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pick, playerIdentity, eventType } from '../src/events/normalize.js';
+import { pick, playerIdentity, playerKey, eventType } from '../src/events/normalize.js';
 import { bucketsFor, isoWeek, previousKey, PERIOD_TYPES } from '../src/stats/periods.js';
 import { killEmbed, leaderboardEmbed } from '../src/discord/embeds.js';
 
@@ -20,6 +20,34 @@ test('playerIdentity keys by name (kills carry no UUID)', () => {
 test('eventType normalizes punctuation and case', () => {
   assert.equal(eventType({ type: 'Player.Kill' }), 'playerkill');
   assert.equal(eventType({ eventType: 'PLAYER_CONNECT' }), 'playerconnect');
+});
+
+test('eventType collapses TGZ_Admin names to their router tokens', () => {
+  // These must match the keys registered in router.js HANDLERS.
+  assert.equal(eventType({ name: 'tgz_player_killed' }), 'tgzplayerkilled');
+  assert.equal(eventType({ name: 'tgz_player_joined' }), 'tgzplayerjoined');
+  assert.equal(eventType({ name: 'tgz_player_left' }), 'tgzplayerleft');
+  assert.equal(eventType({ name: 'tgz_admin_action' }), 'tgzadminaction');
+  assert.equal(eventType({ name: 'tgz_match_started' }), 'tgzmatchstarted');
+  assert.equal(eventType({ name: 'tgz_server_fps_low' }), 'tgzserverfpslow');
+});
+
+test('playerKey prefers an explicit UUID, falls back to name', () => {
+  // TGZ_Admin kill: real UUID present -> key by UUID, keep name for display.
+  assert.deepEqual(
+    playerKey({ victim: 'Mike', victimId: 'uuid-123' }, { idKeys: ['victimId'], nameKeys: ['victim'] }),
+    { id: 'uuid-123', name: 'Mike' },
+  );
+  // Legacy SAT: no UUID -> key by name.
+  assert.deepEqual(
+    playerKey({ victim: 'Mike' }, { idKeys: ['victimId'], nameKeys: ['victim'] }),
+    { id: 'Mike', name: 'Mike' },
+  );
+  // Empty-string UUID (AI/world killer) is ignored, falls back to name.
+  assert.deepEqual(
+    playerKey({ killer: 'AI', killerId: '' }, { idKeys: ['killerId'], nameKeys: ['killer'] }),
+    { id: 'AI', name: 'AI' },
+  );
 });
 
 test('bucketsFor yields all/day/week/month buckets', () => {

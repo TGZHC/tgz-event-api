@@ -10,7 +10,8 @@ export async function adminAction(event) {
   sendEmbed('admin', adminEmbed({
     action: pick(data, 'action', 'adminAction', 'command'),
     admin: pick(data, 'admin', 'adminName', 'by'),
-    target: playerIdentity(data, 'target').name || playerIdentity(data).name,
+    // TGZ_Admin sends a bare `target` name; legacy SAT used target* prefixed keys.
+    target: pick(data, 'target') || playerIdentity(data, 'target').name || playerIdentity(data).name,
     reason: pick(data, 'reason', 'message'),
   }), { mention: true });
 }

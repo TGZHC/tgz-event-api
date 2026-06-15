@@ -46,6 +46,18 @@ const HANDLERS = {
   serveradmintoolsgameended: serverHealth,
   serveradmintoolsvotestarted: serverHealth,
   serveradmintoolsvoteended: serverHealth,
+
+  // --- TGZ_Admin (clean-room SAT replacement) event names ---
+  // eventType() strips underscores, so "tgz_player_killed" -> "tgzplayerkilled".
+  // These payloads are richer (real UUIDs + weapon + distance + factions).
+  tgzplayerkilled: playerKill,
+  tgzplayerjoined: playerJoin,
+  tgzplayerleft: playerLeave,
+  tgzadminaction: adminAction,
+  tgzbasecaptured: objectiveCapture,
+  tgzserverfpslow: serverHealth,
+  tgzmatchstarted: serverHealth,
+  tgzmatchended: serverHealth,
 };
 
 /** Persist then dispatch. Returns { stored, handled, type }. */

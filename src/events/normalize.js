@@ -24,6 +24,19 @@ export function playerIdentity(obj, prefix = '') {
   };
 }
 
+/**
+ * UUID-first identity. Unlike playerIdentity (name-first, for legacy SAT which
+ * only sent names), this prefers an explicit stable identity GUID when the
+ * source provides one — TGZ_Admin sends real backend UUIDs on every event, so
+ * kills, joins and leaves all key to the SAME id. Falls back to the display
+ * name if no UUID is present (so legacy SAT payloads still resolve).
+ */
+export function playerKey(obj, { idKeys = [], nameKeys = [] } = {}) {
+  const name = pick(obj, ...nameKeys);
+  const id = pick(obj, ...idKeys) || name;
+  return { id, name };
+}
+
 /** Normalize SAT's event type string to a lowercase canonical token. */
 export function eventType(event) {
   const raw = pick(event, 'type', 'eventType', 'event', 'name') || '';
