@@ -14,11 +14,13 @@ export function pick(obj, ...keys) {
 
 export function playerIdentity(obj, prefix = '') {
   const p = (k) => `${prefix}${k}`;
+  const name = pick(obj, p('player'), p('playerName'), p('PlayerName'), p('name'), p('Name'), p('playerBiId'));
+  // SAT kill events only carry NAMES (no UUID), so the player NAME is the only
+  // identifier shared across every event type — key stats by it. Fall back to a
+  // UUID only if a name isn't present.
   return {
-    // Prefer the stable UUID ("identity") over the per-session playerId so stats
-    // persist across sessions. SAT uses `identity` (UUID) + `player` (name).
-    id: pick(obj, p('identity'), p('identityId'), p('guid'), p('GUID'), p('uid'), p('playerId'), p('PlayerId'), p('id')),
-    name: pick(obj, p('player'), p('playerName'), p('PlayerName'), p('name'), p('Name'), p('playerBiId')),
+    id: name || pick(obj, p('identity'), p('identityId'), p('guid'), p('GUID'), p('uid'), p('playerId'), p('id')),
+    name,
   };
 }
 

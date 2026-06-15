@@ -10,9 +10,11 @@ test('pick returns the first present key, supports dotted paths', () => {
   assert.equal(pick({ a: '' }, 'a', 'fallbackMissing'), undefined);
 });
 
-test('playerIdentity reads varied SAT key spellings', () => {
-  assert.deepEqual(playerIdentity({ playerId: 'g1', playerName: 'Mike' }), { id: 'g1', name: 'Mike' });
-  assert.deepEqual(playerIdentity({ killerGUID: 'k1', killerName: 'A' }, 'killer'), { id: 'k1', name: 'A' });
+test('playerIdentity keys by name (kills carry no UUID)', () => {
+  // SAT join: { player, identity } — name is the key, not the UUID.
+  assert.deepEqual(playerIdentity({ player: 'Mike', identity: 'uuid-123' }), { id: 'Mike', name: 'Mike' });
+  // Falls back to a UUID only when no name is present.
+  assert.deepEqual(playerIdentity({ identity: 'uuid-123' }), { id: 'uuid-123', name: undefined });
 });
 
 test('eventType normalizes punctuation and case', () => {

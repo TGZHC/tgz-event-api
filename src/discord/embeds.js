@@ -19,16 +19,17 @@ function styleFor(key) {
   return messages.events[key] || { title: key, color: '#7289da' };
 }
 
-export function killEmbed({ killer, victim, weapon, distance, headshot, teamkill }) {
+export function killEmbed({ killer, victim, weapon, distance, headshot, teamkill, at }) {
   const style = styleFor(teamkill ? 'teamkill' : 'kill');
   const fields = [
     { name: 'Killer', value: killer || 'Unknown', inline: true },
     { name: 'Victim', value: victim || 'Unknown', inline: true },
+    { name: 'Team Kill', value: teamkill ? 'Yes' : 'No', inline: true },
   ];
   if (weapon) fields.push({ name: 'Weapon', value: weapon, inline: true });
   if (distance != null) fields.push({ name: 'Distance', value: `${Math.round(distance)} m`, inline: true });
   if (headshot) fields.push({ name: 'Headshot', value: '🎯 Yes', inline: true });
-  return base(render(style.title), style.color, fields);
+  return base(render(style.title), style.color, fields, at ? { timestamp: new Date(at).toISOString() } : {});
 }
 
 export function joinEmbed({ player, players, max }) {

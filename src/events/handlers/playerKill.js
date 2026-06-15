@@ -1,42 +1,36 @@
-// Player kill / death. Posts to Discord and records stats atomically via
-// processKill: victim death + streak reset, killer kill/headshot/weapon/streak/
-// longest-kill record. Team kills are flagged (orange + ⚠️) and counted
-// separately without building a kill streak.
+// Player kill / death. SAT's `serveradmintools_player_killed` payload is minimal:
+//   { player: <victim name>, instigator: <killer name>, friendly: <bool> }
+// plus an event-level `timestamp`. It does NOT include weapon/distance/headshot,
+// so those simply aren't tracked (the game never sends them). Players are keyed
+// by NAME because kills carry no UUID.
 
-import { pick, playerIdentity } from '../normalize.js';
+import { pick } from '../normalize.js';
 import { killEmbed } from '../../discord/embeds.js';
 import { sendEmbed } from '../../discord/webhooks.js';
 import { processKill } from '../../stats/repository.js';
 
 export async function playerKill(event) {
   const data = event.data ?? event;
-  // SAT puts the VICTIM in `player`/`identity` and the KILLER in `instigator`.
-  // Fall back to other mods' spellings for portability.
-  const victim = playerIdentity(data); // player / identity
-  fillMissing(victim, playerIdentity(data, 'victim'));
-  fillMissing(victim, playerIdentity(data, 'target'));
 
-  const killer = {
-    id: pick(data, 'instigatorIdentity', 'instigatorIdentityId', 'instigatorId', 'instigatorUid',
-      'killerIdentity', 'killerId', 'killerguid'),
-    name: pick(data, 'instigator', 'instigatorName', 'killer', 'killerName'),
-  };
+  const victimName = pick(data, 'player', 'victim', 'victimName', 'playerName');
+  const killerName = pick(data, 'instigator', 'killer', 'killerName', 'instigatorName');
+  // AI / world / environment kills have no real killer — count only the death.
+  const killerIsPlayer = killerName && killerName !== 'AI' && killerName !== victimName;
 
-  // SAT's `friendly` flag marks a friendly-fire / team kill.
-  const teamkill = Boolean(pick(data, 'friendly', 'teamkill', 'friendlyFire', 'isTeamKill'));
-  const headshot = Boolean(pick(data, 'headshot', 'isHeadshot', 'headShot'));
-  const weapon = pick(data, 'weapon', 'weaponName', 'killerWeapon');
+  const victim = { id: victimName, name: victimName };
+  const killer = { id: killerIsPlayer ? killerName : undefined, name: killerName };
+
+  // SAT's `friendly` flag marks a team kill (friendly fire).
+  const teamkill = pick(data, 'friendly', 'teamkill', 'friendlyFire', 'isTeamKill') === true;
+
+  // Not provided by SAT, but kept so other mods that DO send them still work.
+  const weapon = pick(data, 'weapon', 'weaponName');
   const distance = pick(data, 'distance', 'killDistance');
+  const headshot = Boolean(pick(data, 'headshot', 'isHeadshot'));
 
-  sendEmbed('kills', killEmbed({
-    killer: killer.name, victim: victim.name, weapon, distance, headshot, teamkill,
-  }));
+  // Use SAT's event time when present (unix seconds), else now.
+  const at = event.timestamp ? new Date(Number(event.timestamp) * 1000) : new Date();
 
-  await processKill({ killer, victim, weapon, distance, headshot, teamkill });
-}
-
-// Copy id/name from `alt` only where `base` is still empty.
-function fillMissing(base, alt) {
-  if (!base.id && alt.id) base.id = alt.id;
-  if (!base.name && alt.name) base.name = alt.name;
+  sendEmbed('kills', killEmbed({ killer: killer.name, victim: victim.name, weapon, distance, headshot, teamkill, at }));
+  await processKill({ killer, victim, weapon, distance, headshot, teamkill, date: at });
 }
