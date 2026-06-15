@@ -5,8 +5,24 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { handleEvent } from '../events/router.js';
+import { recentEvents } from '../stats/repository.js';
 
 export const eventsRouter = Router();
+
+// GET /events/recent?token=YOURTOKEN — see the last raw events SAT sent, so we
+// can read their real type names and field names. Token via header OR ?token=
+// query so it's easy to open in a browser.
+eventsRouter.get('/recent', (req, res, next) => {
+  // Allow the token as a query param for browser convenience.
+  if (req.query.token && !req.get('authorization')) req.headers.authorization = `Bearer ${req.query.token}`;
+  requireAuth(req, res, async () => {
+    try {
+      res.json({ events: await recentEvents(Number.parseInt(req.query.limit, 10) || 20) });
+    } catch (err) {
+      next(err);
+    }
+  });
+});
 
 eventsRouter.post('/', requireAuth, async (req, res, next) => {
   try {

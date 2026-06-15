@@ -24,8 +24,18 @@ export function createApp() {
     next();
   });
 
-  // JSON status for API consumers / uptime checks.
-  app.get('/api/status', (_req, res) => res.json({ name: 'TGZ Event API', status: 'ok' }));
+  // JSON status for API consumers / uptime checks. Includes event counts so you
+  // can confirm in a browser whether SAT events are actually arriving.
+  app.get('/api/status', async (_req, res) => {
+    const body = { name: 'TGZ Event API', status: 'ok' };
+    try {
+      const { eventCounts } = await import('./stats/repository.js');
+      Object.assign(body, await eventCounts());
+    } catch (err) {
+      body.events_error = err.message;
+    }
+    res.json(body);
+  });
 
   app.use('/health', healthRouter);
   app.use('/events', eventsRouter);

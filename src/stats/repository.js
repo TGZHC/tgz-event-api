@@ -205,6 +205,24 @@ export async function getPlayerProfile(playerId) {
   };
 }
 
+// --- Diagnostics: are events actually arriving? ---
+export async function eventCounts() {
+  const total = await query('SELECT COUNT(*) AS c FROM events');
+  const recent = await query("SELECT COUNT(*) AS c FROM events WHERE received_at > (NOW() - INTERVAL 1 HOUR)");
+  const last = await query('SELECT type, received_at FROM events ORDER BY id DESC LIMIT 1');
+  return {
+    events_total: total[0].c,
+    events_last_hour: recent[0].c,
+    last_event_type: last[0]?.type ?? null,
+    last_event_at: last[0]?.received_at ?? null,
+  };
+}
+
+/** Most recent raw events, exactly as SAT sent them — for mapping field names. */
+export async function recentEvents(limit = 20) {
+  return query('SELECT id, type, payload, received_at FROM events ORDER BY id DESC LIMIT ?', [Math.min(Math.max(limit, 1), 100)]);
+}
+
 // --- Scheduler bookkeeping (meta key/value) ---
 export async function getMeta(key) {
   const rows = await query('SELECT v FROM meta WHERE k = ?', [key]);
