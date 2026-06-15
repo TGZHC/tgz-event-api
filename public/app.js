@@ -17,7 +17,7 @@ const SORTS = [
   { key: 'longest_kill_m', label: 'Longest Kill' },
   { key: 'playtime_seconds', label: 'Playtime' },
   { key: 'captures', label: 'Captures' },
-  { key: 'team_kills', label: 'TeamKills' },
+  { key: 'teamkills', label: 'Team Kills' },
 ];
 
 // --- helpers ---
@@ -79,7 +79,7 @@ function lbTable(rows) {
     <thead><tr>
       <th class="rank">#</th><th>Player</th>
       <th class="num">Kills</th><th class="num">Deaths</th><th class="num">K/D</th>
-      <th class="num hide-sm">HS</th><th class="num hide-sm">Streak</th><th class="num hide-sm">Longest</th>
+      <th class="num hide-sm">TK</th><th class="num hide-sm">HS</th><th class="num hide-sm">Streak</th><th class="num hide-sm">Longest</th>
     </tr></thead><tbody>
     ${rows.map((r, i) => `<tr>
       <td class="rank ${i < 3 ? 'medal' : ''}">${medal(i)}</td>
@@ -87,6 +87,7 @@ function lbTable(rows) {
       <td class="num">${r.kills}</td>
       <td class="num">${r.deaths}</td>
       <td class="num ${kdClass(r.kd)}">${r.kd}</td>
+      <td class="num hide-sm ${r.teamkills ? 'kd-bad' : ''}">${r.teamkills}</td>
       <td class="num hide-sm">${r.headshots}</td>
       <td class="num hide-sm">${r.kill_streak_best}</td>
       <td class="num hide-sm">${r.longest_kill_m ? r.longest_kill_m + 'm' : '—'}</td>
@@ -174,6 +175,7 @@ async function renderProfile(id) {
       ${stat(t.kills, 'Kills', true)}
       ${stat(t.deaths, 'Deaths')}
       ${stat(t.kd, 'K/D')}
+      ${stat(t.teamkills, 'Team Kills')}
       ${stat(t.headshots, 'Headshots')}
       ${stat(t.kill_streak_best, 'Best Streak')}
       ${stat(t.longest_kill_m ? t.longest_kill_m + 'm' : '—', 'Longest Kill')}

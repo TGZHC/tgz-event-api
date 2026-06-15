@@ -10,14 +10,20 @@ import { processKill } from '../../stats/repository.js';
 
 export async function playerKill(event) {
   const data = event.data ?? event;
-  const killer = playerIdentity(data, 'killer');
-  const victim = playerIdentity(data, 'victim');
-  // Fill ONLY missing fields from alternate spellings — never overwrite a value
-  // we already found with an undefined one.
-  fillMissing(killer, playerIdentity(data, 'instigator'));
+  // SAT puts the VICTIM in `player`/`identity` and the KILLER in `instigator`.
+  // Fall back to other mods' spellings for portability.
+  const victim = playerIdentity(data); // player / identity
+  fillMissing(victim, playerIdentity(data, 'victim'));
   fillMissing(victim, playerIdentity(data, 'target'));
 
-  const teamkill = Boolean(pick(data, 'teamkill', 'friendlyFire', 'isTeamKill'));
+  const killer = {
+    id: pick(data, 'instigatorIdentity', 'instigatorIdentityId', 'instigatorId', 'instigatorUid',
+      'killerIdentity', 'killerId', 'killerguid'),
+    name: pick(data, 'instigator', 'instigatorName', 'killer', 'killerName'),
+  };
+
+  // SAT's `friendly` flag marks a friendly-fire / team kill.
+  const teamkill = Boolean(pick(data, 'friendly', 'teamkill', 'friendlyFire', 'isTeamKill'));
   const headshot = Boolean(pick(data, 'headshot', 'isHeadshot', 'headShot'));
   const weapon = pick(data, 'weapon', 'weaponName', 'killerWeapon');
   const distance = pick(data, 'distance', 'killDistance');
