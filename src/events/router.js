@@ -66,3 +66,15 @@ export async function handleEvent(event) {
 }
 
 export const knownTypes = Object.keys(HANDLERS);
+
+/**
+ * Normalize a request body into a flat list of events. Handles:
+ *  - SAT's batch format: { token, events: [ {name, data, ...}, ... ] }
+ *  - a bare array of events
+ *  - a single event object
+ */
+export function toEventList(body) {
+  if (Array.isArray(body)) return body;
+  if (body && Array.isArray(body.events)) return body.events;
+  return [body];
+}

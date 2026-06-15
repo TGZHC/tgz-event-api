@@ -15,8 +15,10 @@ export function pick(obj, ...keys) {
 export function playerIdentity(obj, prefix = '') {
   const p = (k) => `${prefix}${k}`;
   return {
-    id: pick(obj, p('playerId'), p('PlayerId'), p('guid'), p('GUID'), p('identityId'), p('uid'), p('id')),
-    name: pick(obj, p('playerName'), p('PlayerName'), p('name'), p('Name'), p('playerBiId')),
+    // Prefer the stable UUID ("identity") over the per-session playerId so stats
+    // persist across sessions. SAT uses `identity` (UUID) + `player` (name).
+    id: pick(obj, p('identity'), p('identityId'), p('guid'), p('GUID'), p('uid'), p('playerId'), p('PlayerId'), p('id')),
+    name: pick(obj, p('player'), p('playerName'), p('PlayerName'), p('name'), p('Name'), p('playerBiId')),
   };
 }
 

@@ -10,7 +10,7 @@ import { healthRouter } from './routes/health.js';
 import { statsRouter } from './routes/stats.js';
 import { testRouter } from './routes/diagnostics.js';
 import { requireAuth, isAuthorized } from './middleware/auth.js';
-import { handleEvent } from './events/router.js';
+import { handleEvent, toEventList } from './events/router.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 // Live diagnostics (in-memory, reset on redeploy). Lets us SEE whether SAT is
@@ -74,11 +74,16 @@ export function createApp() {
   // as the event type when the body doesn't carry one.
   app.post('*', requireAuth, async (req, res, next) => {
     try {
-      const event = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? { ...req.body } : {};
+      const events = toEventList(req.body);
       const pathType = req.path.replace(/^\/+/, '');
-      if (!event.type && pathType && pathType !== 'events') event.type = pathType;
-      const result = await handleEvent(event);
-      res.status(202).json(result);
+      const results = [];
+      for (const event of events) {
+        const e = event && typeof event === 'object' && !Array.isArray(event) ? { ...event } : { value: event };
+        // If a SAT-style path carried the type and the body didn't, use it.
+        if (!e.type && !e.name && pathType && pathType !== 'events') e.type = pathType;
+        results.push(await handleEvent(e));
+      }
+      res.status(202).json({ accepted: results.length, results });
     } catch (err) {
       next(err);
     }
