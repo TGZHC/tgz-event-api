@@ -6,18 +6,18 @@
    After editing, save + push (or edit on GitHub) and the site updates itself.
    ════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg: #0c0d0a;          /* page background (near-black)         */
+  --bg: #2E2B2B;          /* page background (near-black)         */
   --bg-2: #15170f;        /* panels / cards / tables              */
   --bg-3: #1e2116;        /* raised panels, row hover             */
   --line: #2f3420;        /* borders / dividers                   */
   --text: #e7e3d4;        /* main text color                      */
   --muted: #968f76;       /* dim text (labels, hints)             */
-  --tan: #c2b280;         /* MAIN ACCENT — headings, links, #1s   */
-  --tan-bright: #dccfa6;  /* brighter tan for active items        */
-  --olive: #7a8b3c;       /* secondary accent (active tab, bars)  */
-  --olive-dark: #4b5320;  /* darker olive (borders, tab bg)       */
+  --tan: #997D49;         /* MAIN ACCENT — headings, links, #1s   */
+  --tan-bright: #D1AD69;  /* brighter tan for active items        */
+  --olive: #6A7A64;       /* secondary accent (active tab, bars)  */
+  --olive-dark: #4F5C4A;  /* darker olive (borders, tab bg)       */
   --danger: #b5503f;      /* "bad" stat color (deaths, low K/D)   */
-  --good: #8aa04a;        /* "good" stat color (high K/D)         */
+  --good: #878F77;        /* "good" stat color (high K/D)         */
 
   /* Fonts — change these two lines to restyle all text.            */
   --font-main: "Segoe UI", Roboto, system-ui, -apple-system, sans-serif; /* body/headers */
