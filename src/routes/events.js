@@ -4,7 +4,7 @@
 
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
-import { handleEvent } from '../events/router.js';
+import { handleEvent, toEventList } from '../events/router.js';
 import { recentEvents } from '../stats/repository.js';
 
 export const eventsRouter = Router();
@@ -27,7 +27,10 @@ eventsRouter.get('/recent', (req, res, next) => {
 eventsRouter.post('/', requireAuth, async (req, res, next) => {
   try {
     const body = req.body;
-    const events = Array.isArray(body) ? body : [body];
+    // Unwrap the batch envelope { token, events: [...] } (what the mod sends), a bare array, or a
+    // single event object. Previously this only handled arrays/single objects, so a batch envelope
+    // was treated as ONE event with no name -> nothing got handled.
+    const events = toEventList(body);
     if (events.length === 0 || typeof events[0] !== 'object') {
       return res.status(400).json({ error: 'expected an event object or array of events' });
     }
