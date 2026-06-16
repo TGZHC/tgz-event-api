@@ -6,9 +6,9 @@
    After editing, save + push (or edit on GitHub) and the site updates itself.
    ════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg: #2E2B2B;          /* page background (near-black)         */
-  --bg-2: #15170f;        /* panels / cards / tables              */
-  --bg-3: #1e2116;        /* raised panels, row hover             */
+  --bg: #020202;          /* page background (near-black)         */
+  --bg-2: #1b1b14;        /* panels / cards / tables              */
+  --bg-3: #24251e;        /* raised panels, row hover             */
   --line: #2f3420;        /* borders / dividers                   */
   --text: #e7e3d4;        /* main text color                      */
   --muted: #968f76;       /* dim text (labels, hints)             */
@@ -20,8 +20,8 @@
   --good: #878F77;        /* "good" stat color (high K/D)         */
 
   /* Fonts — change these two lines to restyle all text.            */
-  --font-main: "Black Ops One", Roboto, system-ui, -apple-system, sans-serif; /* body/headers */
-  --font-mono: "Consolas", "SFMono-Regular", ui-monospace, monospace;    /* numbers      */
+  --font-main: "Arimo", Roboto, system-ui, -apple-system, sans-serif; /* body/headers */
+  --font-mono: "Syne Mono", "SFMono-Regular", ui-monospace, monospace;    /* numbers      */
 
   --radius: 4px;          /* corner roundness (0 = sharp, 12 = round) */
   --shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
